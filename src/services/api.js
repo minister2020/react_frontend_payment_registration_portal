@@ -4,9 +4,8 @@ const API_BASE_URL = 'https://payment-registration-portal.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: {'Content-Type':'application/json'},
+  withCredentials: true, 
 });
 
 // Handle 401 responses (unauthorized)

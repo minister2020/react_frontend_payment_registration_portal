@@ -225,7 +225,7 @@ const RegistrationPage = () => {
   //   }
   // };
 
-  const selectedZone = zones.find((z) => z.id.toString() === formData.zoneId);
+  // const selectedZone = zones.find((z) => z.id.toString() === formData.zoneId);
 
   return (
     <div className="card">

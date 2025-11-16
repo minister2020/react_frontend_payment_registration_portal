@@ -1,12 +1,16 @@
 .App {
   text-align: center;
+  padding: 0 1rem; /* Add spacing on mobile */
+  box-sizing: border-box;
 }
 
 .App-logo {
-  height: 40vmin;
+  height: 30vmin; /* Smaller on mobile */
+  max-width: 180px;
   pointer-events: none;
 }
 
+/* Animation only for users who allow it */
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
@@ -20,12 +24,37 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  padding: 2rem 1rem; /* Better spacing on mobile */
+  font-size: calc(12px + 2vmin);
   color: white;
 }
 
 .App-link {
   color: #61dafb;
+}
+
+/* Mobile adjustments (Phones < 600px) */
+@media (max-width: 600px) {
+  .App-header {
+    font-size: 1rem; /* Increase readability */
+  }
+
+  .App-logo {
+    height: 25vmin;  /* Reduce logo size */
+    max-width: 140px;
+  }
+}
+
+/* Tablets (600px – 900px) */
+@media (max-width: 900px) and (min-width: 600px) {
+  .App-logo {
+    height: 28vmin;
+    max-width: 160px;
+  }
+
+  .App-header {
+    font-size: 1.1rem;
+  }
 }
 
 @keyframes App-logo-spin {

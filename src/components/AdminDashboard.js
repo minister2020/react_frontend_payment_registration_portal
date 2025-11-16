@@ -304,6 +304,9 @@ const AdminDashboard = () => {
             </button>
             <h2>Registration Details</h2>
             <div style={{ marginTop: '20px' }}>
+                <div style={{ marginBottom: '15px' }}>
+                <strong>first Time Attending Camp:</strong> {selectedRegistration.firstTimeAttendingCamp}
+              </div>
               <div style={{ marginBottom: '15px' }}>
                 <strong>Child Name:</strong> {selectedRegistration.childName}
               </div>

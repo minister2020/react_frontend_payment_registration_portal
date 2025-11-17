@@ -29,7 +29,7 @@ export const getZones = () => {
 };
 
 export const initializePayment = (paymentData) => {
-  return api.post('/transaction/initialize', paymentData);
+  return api.post('/payments/initialize', paymentData);
 };
 
 export const verifyPayment = (reference) => {

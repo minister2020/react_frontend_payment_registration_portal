@@ -33,7 +33,7 @@ export const initializePayment = (paymentData) => {
 };
 
 export const verifyPayment = (reference) => {
-  return api.get(`payments/verify/${reference}`);
+  return api.get(`/payments/verify/${reference}`);
 };
 
 export const getPayment = (reference) => {

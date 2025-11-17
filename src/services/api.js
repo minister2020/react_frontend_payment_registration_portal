@@ -29,15 +29,15 @@ export const getZones = () => {
 };
 
 export const initializePayment = (paymentData) => {
-  return api.post('/payments/initialize', paymentData);
+  return api.post('/transaction/initialize', paymentData);
 };
 
 export const verifyPayment = (reference) => {
-  return api.get(`/payments/verify/${reference}`);
+  return api.get(`/transaction/verify/${reference}`);
 };
 
 export const getPayment = (reference) => {
-  return api.get(`/payments/${reference}`);
+  return api.get(`/transaction/${reference}`);
 };
 
 export const createRegistration = (registrationData) => {

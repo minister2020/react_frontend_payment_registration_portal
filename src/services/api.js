@@ -48,6 +48,10 @@ export const getRegistrationsByPayment = (paymentReference) => {
   return api.get(`/registrations/payment/${paymentReference}`);
 };
 
+export const validatePaymentReference = (reference) =>
+  api.get(`/payments/validate/${reference}`);
+
+
 // Admin APIs
 export const getAllRegistrations = (zoneId, startDate, endDate) => {
   const params = new URLSearchParams();

@@ -65,4 +65,9 @@
     transform: rotate(360deg);
   }
 }
+.card {
+  width: 100% !important;
+  max-width: 100% !important;  /* Fixes shrinking */
+  box-sizing: border-box;
+}
 

@@ -144,7 +144,7 @@ const AdminDashboard = () => {
         CreatedAt: formatDate(reg.createdAt),
         PaymentDate: formatDate(reg.paymentCreatedAt),
         Address: reg.address,
-        TC_Center: reg.tcCenter,
+        TcCenter: reg.tcCenter,
         Allergy: reg.allergy,
         PaymentReference: reg.paymentReference,
       }))

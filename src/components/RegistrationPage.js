@@ -16,6 +16,7 @@ const RegistrationPage = () => {
 
   const [formData, setFormData] = useState({
     firstTimeAttendingCamp:'',
+    registrationType: '',
     childName: '',
     age: '',
     tcCenter: '',
@@ -67,24 +68,6 @@ const RegistrationPage = () => {
       });
   }, [navigate]);
 
-  //   setPaymentReference(ref);
-  //   setNumberOfRegistrants(parseInt(numRegistrants) || 1);
-  //   setSelectedZoneId(zoneId || '');
-  //   setFormData((prev) => ({ ...prev, zoneId: zoneId || '' }));
-
-  //   // Fetch zones
-  //   getZones()
-  //     .then((response) => {
-  //       setZones(response.data);
-  //     })
-  //     .catch((err) => {
-  //       setError('Failed to load zones');
-  //       console.error(err);
-  //     });
-
-  //   // Load already submitted registrations
-  //   loadSubmittedRegistrations(ref);
-  // }, [navigate]);
 
   const loadSubmittedRegistrations = async (ref) => {
     try {
@@ -107,6 +90,10 @@ const RegistrationPage = () => {
   const validateForm = () => {
     if (!formData.firstTimeAttendingCamp) {
     setError('Please select if this is your first time attending camp');
+    return false;
+    }
+    if (!formData.registrationType) {
+    setError('Please select your registration type');
     return false;
     }
     if (!formData.childName.trim()) {
@@ -178,6 +165,7 @@ const RegistrationPage = () => {
     if (currentRegistrant < numberOfRegistrants) {
       setFormData({
         firstTimeAttendingCamp: '',
+        registrationType: '',
         childName: '',
         age: '',
         tcCenter: '',
@@ -231,6 +219,20 @@ const RegistrationPage = () => {
           <option value="">Select</option>
           <option value="Yes">Yes</option>
           <option value="No">No</option>
+        </select>
+      </div>
+
+        <div className="form-group">
+        <label htmlFor="registrationType">Registration Type?</label>
+        <select
+          id="registrationType"
+          name="registrationType"
+          value={formData.registrationType}
+          onChange={(e) => setFormData({ ...formData, registrationType: e.target.value })}
+        >
+          <option value="">Select</option>
+          <option value="DELEGATE">DELEGATE</option>
+          <option value="OFFICIAL">OFFICIAL</option>
         </select>
       </div>
 

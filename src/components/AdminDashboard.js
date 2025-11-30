@@ -133,6 +133,7 @@ const AdminDashboard = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       registrations.map((reg) => ({
         FirstTimer: reg.firstTimeAttendingCamp,
+        RegistrationType: reg.registrationType,
         ChildName: reg.childName,
         Age: reg.age,
         Zone: reg.zoneName,
@@ -261,6 +262,7 @@ const AdminDashboard = () => {
             <thead>
               <tr style={{ background: '#f5f5f5' }}>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>First Timer</th>
+                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Registration Type</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Child Name</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Age</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Zone</th>
@@ -278,6 +280,7 @@ const AdminDashboard = () => {
               {paginatedData.map((reg) => (
                 <tr key={reg.id} style={{ borderBottom: '1px solid #ddd' }}>
                   <td style={{ padding: '12px' }}>{reg.firstTimeAttendingCamp}</td>
+                  <td style={{ padding: '12px' }}>{reg.registrationType}</td>
                   <td style={{ padding: '12px' }}>{reg.childName}</td>
                   <td style={{ padding: '12px' }}>{reg.age}</td>
                   <td style={{ padding: '12px' }}>{reg.zoneName}</td>
@@ -379,6 +382,7 @@ const AdminDashboard = () => {
 
             <div style={{ marginTop: '15px' }}>
               <p><strong>First Timer:</strong> {selectedRegistration.firstTimeAttendingCamp}</p>
+              <p><strong>Registration Type:</strong> {selectedRegistration.registrationType}</p>
               <p><strong>Child Name:</strong> {selectedRegistration.childName}</p>
               <p><strong>Age:</strong> {selectedRegistration.age}</p>
               <p><strong>Zone:</strong> {selectedRegistration.zoneName}</p>

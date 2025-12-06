@@ -6,12 +6,9 @@ import { saveAs } from 'file-saver';
 
 const AdminDashboard = () => {
   const [registrations, setRegistrations] = useState([]);
-  const [zones, setZones] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [checkedDelegates, setCheckedDelegates] = useState([]);
-
 
   const [filters, setFilters] = useState({
     zoneId: '',
@@ -21,11 +18,10 @@ const AdminDashboard = () => {
 
   const [selectedRegistration, setSelectedRegistration] = useState(null);
 
-    // Pagination
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10; // changed to 10 per page as requested
+  const pageSize = 10;
   let totalPages = 1;
-
 
   const navigate = useNavigate();
 
@@ -48,22 +44,18 @@ const AdminDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-const [checkedIn, setCheckedIn] = useState(() => {
-  const saved = localStorage.getItem('checkedIn');
-  return saved ? JSON.parse(saved) : {};
-});
-useEffect(() => {
-  localStorage.setItem('checkedIn', JSON.stringify(checkedIn));
-}, [checkedIn]);
+  const [checkedIn, setCheckedIn] = useState(() => {
+    const saved = localStorage.getItem('checkedIn');
+    return saved ? JSON.parse(saved) : {};
+  });
 
+  useEffect(() => {
+    localStorage.setItem('checkedIn', JSON.stringify(checkedIn));
+  }, [checkedIn]);
 
   const handleCheckIn = (id) => {
     setCheckedIn((prev) => ({ ...prev, [id]: true }));
-    setCheckedDelegates((prev) => [...prev, id]);
-
   };
-// const checkedCount = Object.keys(checkedIn).length;
-
 
   // Ensure currentPage is clamped when registrations length changes
   useEffect(() => {
@@ -77,8 +69,7 @@ useEffect(() => {
 
   const loadZones = async () => {
     try {
-      const response = await getZones();
-      setZones(response.data);
+      await getZones(); // no need to save if unused
     } catch (err) {
       console.error('Failed to load zones', err);
     }
@@ -100,7 +91,7 @@ useEffect(() => {
       const zoneId = filters.zoneId ? parseInt(filters.zoneId) : null;
       const response = await getAllRegistrations(zoneId, filters.startDate || null, filters.endDate || null);
       setRegistrations(Array.isArray(response.data) ? response.data : []);
-      setCurrentPage(1); // reset to first page on new data/filter
+      setCurrentPage(1);
     } catch (err) {
       setError('Failed to load registrations');
       console.error(err);
@@ -117,17 +108,14 @@ useEffect(() => {
     }));
   };
 
-    const clearFilters = () => {
-    // clear the frontend search filters (leave other filters untouched if present)
+  const clearFilters = () => {
     setFilters((prev) => ({
       ...prev,
-      searchValue: "",
-      searchBy: ""
+      searchValue: '',
+      searchBy: ''
     }));
-    // reset to first page
     setCurrentPage(1);
   };
-
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -137,7 +125,6 @@ useEffect(() => {
 
   const formatCurrency = (amount) => {
     if (amount === null || amount === undefined) return '-';
-    // If amount is string/number, ensure formatting
     const num = typeof amount === 'number' ? amount : Number(amount);
     if (Number.isNaN(num)) return amount;
     return '₦' + num.toLocaleString();
@@ -145,50 +132,38 @@ useEffect(() => {
 
   const username = localStorage.getItem('username') || 'Admin';
 
-const filteredRegistrations = Array.isArray(registrations) ? registrations.filter((reg) => {
-  const svRaw = (filters.searchValue || "").toString().trim();
-  const sv = svRaw.toLowerCase();
-  const sb = (filters.searchBy || "").toString();
+  const filteredRegistrations = Array.isArray(registrations) ? registrations.filter((reg) => {
+    const svRaw = (filters.searchValue || "").toString().trim();
+    const sv = svRaw.toLowerCase();
+    const sb = (filters.searchBy || "").toString();
 
-  if (!sv || !sb) return true; // no search -> include all
+    if (!sv || !sb) return true;
 
-  if (sb === "name") {
-    return (reg.childName || "").toString().toLowerCase().includes(sv);
-  }
+    if (sb === "name") {
+      return (reg.childName || "").toString().toLowerCase().includes(sv);
+    }
 
-  if (sb === "age") {
+    if (sb === "age") {
+      const queryAge = parseInt(svRaw, 10);
+      if (Number.isNaN(queryAge)) return false;
+      const regAge = reg.age === undefined || reg.age === null ? null : Number(reg.age);
+      return regAge === queryAge;
+    }
 
-    const queryAge = parseInt(svRaw, 10);
-    if (Number.isNaN(queryAge)) return false;
-    // handle reg.age being string or number
-    const regAge = reg.age === undefined || reg.age === null ? null : Number(reg.age);
-    return regAge === queryAge;
-  }
+    if (sb === "tcCenter" || sb === "tc") {
+      return (reg.tcCenter || "").toString().toLowerCase().includes(sv);
+    }
 
-  if (sb === "tcCenter" || sb === "tc") {
-    return (reg.tcCenter || "").toString().toLowerCase().includes(sv);
-  }
+    return true;
+  }) : [];
 
-  return true;
-}) : [];
+  totalPages = Math.max(1, Math.ceil(filteredRegistrations.length / pageSize));
 
-
-  // compute pagination from filtered list
-  const totalFiltered = filteredRegistrations.length;
-  totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
-
-  // ensure currentPage is within bounds (this is safe to run during render)
-  if (currentPage > totalPages) {
-    setCurrentPage(totalPages);
-  }
-  if (currentPage < 1) {
-    setCurrentPage(1);
-  }
+  if (currentPage > totalPages) setCurrentPage(totalPages);
+  if (currentPage < 1) setCurrentPage(1);
 
   const paginatedData = filteredRegistrations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-
-  // Export ALL registrations to Excel
   const exportAllToExcel = () => {
     if (!registrations || registrations.length === 0) return;
 
@@ -219,6 +194,7 @@ const filteredRegistrations = Array.isArray(registrations) ? registrations.filte
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const fileData = new Blob([excelBuffer], { type: 'application/octet-stream' });
     saveAs(fileData, `Registrations_${Date.now()}.xlsx`);
+
   };
 
   return (

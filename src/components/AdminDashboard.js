@@ -10,6 +10,8 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [checkedDelegates, setCheckedDelegates] = useState([]);
+
 
   const [filters, setFilters] = useState({
     zoneId: '',
@@ -19,10 +21,11 @@ const AdminDashboard = () => {
 
   const [selectedRegistration, setSelectedRegistration] = useState(null);
 
-  // Pagination
+    // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
-  const totalPages = Math.max(1, Math.ceil(registrations.length / pageSize));
+  const pageSize = 10; // changed to 10 per page as requested
+  let totalPages = 1;
+
 
   const navigate = useNavigate();
 
@@ -38,14 +41,32 @@ const AdminDashboard = () => {
   useEffect(() => {
     loadZones();
     loadStats();
-    // loadRegistrations will run from the other effect below (which runs on mount because filters are initialized)
   }, []);
 
-  // Load registrations whenever filters change (and on mount)
   useEffect(() => {
     loadRegistrations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.zoneId, filters.startDate, filters.endDate]);
+  }, []);
+
+    // Track UI-only check-in status for delegates (id -> true)
+  // const [checkedIn, setCheckedIn] = useState({});
+  // Track UI-only check-in status for delegates (id -> true) with persistence
+const [checkedIn, setCheckedIn] = useState(() => {
+  const saved = localStorage.getItem('checkedIn');
+  return saved ? JSON.parse(saved) : {};
+});
+useEffect(() => {
+  localStorage.setItem('checkedIn', JSON.stringify(checkedIn));
+}, [checkedIn]);
+
+
+  const handleCheckIn = (id) => {
+    setCheckedIn((prev) => ({ ...prev, [id]: true }));
+    setCheckedDelegates((prev) => [...prev, id]);
+
+  };
+const checkedCount = Object.keys(checkedIn).length;
+
 
   // Ensure currentPage is clamped when registrations length changes
   useEffect(() => {
@@ -99,13 +120,17 @@ const AdminDashboard = () => {
     }));
   };
 
-  const clearFilters = () => {
-    setFilters({
-      zoneId: '',
-      startDate: '',
-      endDate: '',
-    });
+    const clearFilters = () => {
+    // clear the frontend search filters (leave other filters untouched if present)
+    setFilters((prev) => ({
+      ...prev,
+      searchValue: "",
+      searchBy: ""
+    }));
+    // reset to first page
+    setCurrentPage(1);
   };
+
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -123,8 +148,48 @@ const AdminDashboard = () => {
 
   const username = localStorage.getItem('username') || 'Admin';
 
-  // Pagination logic (slice the data to display)
-  const paginatedData = registrations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+const filteredRegistrations = Array.isArray(registrations) ? registrations.filter((reg) => {
+  const svRaw = (filters.searchValue || "").toString().trim();
+  const sv = svRaw.toLowerCase();
+  const sb = (filters.searchBy || "").toString();
+
+  if (!sv || !sb) return true; // no search -> include all
+
+  if (sb === "name") {
+    return (reg.childName || "").toString().toLowerCase().includes(sv);
+  }
+
+  if (sb === "age") {
+
+    const queryAge = parseInt(svRaw, 10);
+    if (Number.isNaN(queryAge)) return false;
+    // handle reg.age being string or number
+    const regAge = reg.age === undefined || reg.age === null ? null : Number(reg.age);
+    return regAge === queryAge;
+  }
+
+  if (sb === "tcCenter" || sb === "tc") {
+    return (reg.tcCenter || "").toString().toLowerCase().includes(sv);
+  }
+
+  return true;
+}) : [];
+
+
+  // compute pagination from filtered list
+  const totalFiltered = filteredRegistrations.length;
+  totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+
+  // ensure currentPage is within bounds (this is safe to run during render)
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+  if (currentPage < 1) {
+    setCurrentPage(1);
+  }
+
+  const paginatedData = filteredRegistrations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
 
   // Export ALL registrations to Excel
   const exportAllToExcel = () => {
@@ -187,51 +252,90 @@ const AdminDashboard = () => {
 
       {/* STATISTICS */}
       {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ background: '#667eea', color: 'white', padding: '20px', borderRadius: '8px' }}>
-            <h3>Total Registrations</h3>
-            <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{stats.totalRegistrations}</p>
-          </div>
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+    <div style={{ background: '#667eea', color: 'white', padding: '20px', borderRadius: '8px' }}>
+      <h3>Total Registrations</h3>
+      <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{stats.totalRegistrations}</p>
+    </div>
 
-          <div style={{ background: '#764ba2', color: 'white', padding: '20px', borderRadius: '8px' }}>
-            <h3>Total Payments</h3>
-            <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{stats.totalPayments}</p>
-          </div>
+    <div style={{ background: '#764ba2', color: 'white', padding: '20px', borderRadius: '8px' }}>
+      <h3>Total Payments</h3>
+      <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{stats.totalPayments}</p>
+    </div>
 
-          <div style={{ background: '#f093fb', color: 'white', padding: '20px', borderRadius: '8px' }}>
-            <h3>Total Revenue</h3>
-            <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{formatCurrency(stats.totalRevenue)}</p>
-          </div>
-        </div>
-      )}
+    <div style={{ background: '#f093fb', color: 'white', padding: '20px', borderRadius: '8px' }}>
+      <h3>Total Revenue</h3>
+      <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{formatCurrency(stats.totalRevenue)}</p>
+    </div>
+
+    <div style={{ background: '#48bb78', color: 'white', padding: '20px', borderRadius: '8px' }}>
+      <h3>Checked Delegates</h3>
+      <p style={{ fontSize: '32px', fontWeight: 'bold' }}>{Object.keys(checkedIn).length}</p>
+    </div>
+  </div>
+)}
 
       {/* FILTERS */}
       <div style={{ width: '100%', padding: '20px', background: 'white', borderRadius: '8px', marginBottom: '20px', boxSizing: 'border-box' }}>
         <h2>Filters</h2>
+        <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "15px",
+            }}
+          >
+            {/* Search Registration */}
+            <div>
+              <label>Search Registration</label>
+              <input
+                type="text"
+                name="searchValue"
+                value={filters.searchValue}
+                onChange={handleFilterChange}
+                placeholder="Enter text…"
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-          <div>
-            <label>Zone</label>
-            <select name="zoneId" value={filters.zoneId} onChange={handleFilterChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', boxSizing: 'border-box' }}>
-              <option value="">All Zones</option>
-              {zones.map((zone) => (
-                <option key={zone.id} value={zone.id}>{zone.name}</option>
-              ))}
-            </select>
+            {/* Search By Dropdown */}
+            <div>
+              <label>Search By</label>
+              <select
+                name="searchBy"
+                value={filters.searchBy}
+                onChange={handleFilterChange}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  boxSizing: "border-box",
+                }}
+              >
+                <option value="">-- Select --</option>
+                <option value="name">Name</option>
+                <option value="age">Age</option>
+                <option value="tcCenter">TC Center</option>
+              </select>
+            </div>
           </div>
+        <div
+          style={{
+            marginTop: '15px',
+            display: 'flex',
+            gap: '10px',
+            flexWrap: 'nowrap',       
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            overflowX: 'auto'         
+          }}
+>
 
-          <div>
-            <label>Start Date</label>
-            <input type="datetime-local" name="startDate" value={filters.startDate} onChange={handleFilterChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', boxSizing: 'border-box' }} />
-          </div>
-
-          <div>
-            <label>End Date</label>
-            <input type="datetime-local" name="endDate" value={filters.endDate} onChange={handleFilterChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', boxSizing: 'border-box' }} />
-          </div>
-        </div>
-
-        <div style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={clearFilters} style={{ padding: '8px 14px' }}>
             Clear Filters
           </button>
@@ -294,11 +398,31 @@ const AdminDashboard = () => {
                     </span>
                   </td>
                   <td style={{ padding: '12px' }}>{formatDate(reg.createdAt)}</td>
-                  <td style={{ padding: '12px' }}>
-                    <button className="btn btn-primary" onClick={() => setSelectedRegistration(reg)} style={{ padding: '6px 12px' }}>
-                      View Details
-                    </button>
-                  </td>
+                  <td style={{ padding: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+  <button
+    className="btn btn-primary"
+    onClick={() => setSelectedRegistration(reg)}
+    style={{ padding: '6px 12px' }}
+  >
+    View Details
+  </button>
+
+  <button
+    className="btn btn-success"
+    onClick={() => handleCheckIn(reg.id)}
+    disabled={!!checkedIn[reg.id]}
+    style={{
+      padding: '6px 12px',
+      background: checkedIn[reg.id] ? '#888' : 'green',
+      color: 'white',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: checkedIn[reg.id] ? 'not-allowed' : 'pointer'
+    }}
+  >
+    {checkedIn[reg.id] ? 'Checked' : 'Check In'}
+  </button>
+</td>
                 </tr>
               ))}
             </tbody>
@@ -314,10 +438,9 @@ const AdminDashboard = () => {
           >
             Prev
           </button>
-
           <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-            Page {registrations.length === 0 ? 0 : currentPage} of {registrations.length === 0 ? 0 : totalPages}
-          </span>
+  Page {filteredRegistrations.length === 0 ? 0 : currentPage} of {filteredRegistrations.length === 0 ? 0 : totalPages}
+</span>
 
           <button
             disabled={currentPage === totalPages || registrations.length === 0}

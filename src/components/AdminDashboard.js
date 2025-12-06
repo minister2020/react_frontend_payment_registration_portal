@@ -48,9 +48,6 @@ const AdminDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    // Track UI-only check-in status for delegates (id -> true)
-  // const [checkedIn, setCheckedIn] = useState({});
-  // Track UI-only check-in status for delegates (id -> true) with persistence
 const [checkedIn, setCheckedIn] = useState(() => {
   const saved = localStorage.getItem('checkedIn');
   return saved ? JSON.parse(saved) : {};
@@ -65,7 +62,7 @@ useEffect(() => {
     setCheckedDelegates((prev) => [...prev, id]);
 
   };
-const checkedCount = Object.keys(checkedIn).length;
+// const checkedCount = Object.keys(checkedIn).length;
 
 
   // Ensure currentPage is clamped when registrations length changes
